@@ -13,10 +13,10 @@ import (
 type Product struct {
 	ID        uuid.UUID `gorm:"type:uuid;primary_key"`
 	CreatedAt time.Time
-	UpdatedAt time.Time
+	UpdatedAt time.Time `gorm:"index:idx_code_updated"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
-	Code  string
+	Code  string `gorm:"index:idx_code_updated"`
 	Price uint
 }
 
@@ -28,7 +28,10 @@ func main() {
 	}
 	ctx := context.Background()
 
-	db.AutoMigrate(&Product{})
+	db.AutoMigrate(&Product{}) // Automatically creates indexes from struct tags
+	
+	// Only need explicit creation for conditional indexes
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_price_created_d42 ON products(price, created_at) WHERE code = 'D42'")
 
 	err = gorm.G[Product](db).Create(ctx, &Product{ID: uuid.New(), Code: "D42", Price: 100})
 	if err != nil {
